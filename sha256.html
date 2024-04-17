@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Email Hashing</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f4;
+      margin: 0;
+      padding: 20px;
+    }
+  
+    h2 {
+      color: #333;
+    }
+  
+    #emailList, #hashedEmails {
+      width: 100%;
+      max-width: 500px;
+      padding: 10px;
+      margin-bottom: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      resize: vertical;
+    }
+  
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+  
+    button:hover {
+      background-color: #45a049;
+    }
+
+    #hashedEmails {
+      white-space: pre-wrap;
+    }
+  </style>
+  <script>
+    function hashEmails() {
+  var emailInput = document.getElementById('emailList').value.trim();
+
+  if (emailInput === '') {
+    alert('Please enter at least one email address.');
+    return;
+  }
+
+  var emailArray = emailInput.split('\n');
+
+  Promise.allSettled(emailArray.map(function(email) {
+    return sha256(email.trim());
+  }))
+  .then(function(results) {
+    var hashedEmails = results.map(function(result) {
+      if (result.status === 'fulfilled') {
+        return result.value;
+      } else {
+        console.error('Error hashing email:', result.reason);
+        return 'Error';
+      }
+    });
+    document.getElementById('hashedEmails').value = hashedEmails.join('\n');
+  })
+  .catch(function(error) {
+    console.error('Error hashing emails:', error);
+    alert('An error occurred while hashing the emails. Please try again.');
+  });
+}
+
+function sha256(str) {
+  return crypto.subtle.digest('SHA-256', new TextEncoder().encode(str))
+  .then(function(hash) {
+    return Array.prototype.map.call(new Uint8Array(hash), function(byte) {
+      return ('0' + byte.toString(16)).slice(-2);
+    }).join('');
+  });
+}
+  </script>
+</head>
+<body>
+  <div style="text-align: center;">
+    <h2>Email Hashing</h2>
+    <textarea id="emailList" rows="5" placeholder="Enter email addresses here"></textarea><br>
+    <button onclick="hashEmails()">SHA256</button><br>
+    <textarea id="hashedEmails" rows="5" placeholder="Hashed email addresses will appear here"></textarea>
+  </div>
+</body>
+</html>
